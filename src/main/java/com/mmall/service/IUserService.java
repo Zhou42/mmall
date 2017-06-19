@@ -27,4 +27,6 @@ public interface IUserService {
 
     ServerResponse<User> getInformation(Integer userId);
 
+    public ServerResponse checkAdminRole(User user);
+
 }

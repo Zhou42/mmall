@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 /**
@@ -52,7 +53,6 @@ public class UserController {
         return ServerResponse.createBySuccess();
     }
 
-
     /*
      * User registration
      */
@@ -76,7 +76,9 @@ public class UserController {
     @RequestMapping(value = "get_user_info.do", method = RequestMethod.GET)
     @ResponseBody
     public ServerResponse<User> get_user_info(HttpSession session) {
+
         User user = (User) session.getAttribute(Const.CURRENT_USER);
+
         if (user != null) {
             return ServerResponse.createBySuccess(user);
         }
