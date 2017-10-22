@@ -101,7 +101,7 @@
         create_time = #{createTime,jdbcType=TIMESTAMP},
       </if>
       <if test="updateTime != null" >
-        now(),
+        update_time = now(),
       </if>
     </set>
     where id = #{id,jdbcType=INTEGER}
@@ -116,4 +116,62 @@
       update_time = now()
     where id = #{id,jdbcType=INTEGER}
   </update>
+
+  <select id="selectCartByUserIdProductId" resultMap="BaseResultMap" parameterType="map">
+    SELECT
+    <include refid="Base_Column_List" />
+    FROM mmall_cart
+    WHERE user_id = #{userId}
+    and
+    product_id = #{productId}
+  </select>
+  <!-- 这里resultMap 是在这个CartMapper文件开始 就定义了的 为了map Cart用的 -->
+  <!-- parameterType 要用int而不是Integer -->
+  <select id="selectCartByUserId" parameterType="int" resultMap="BaseResultMap">
+    SELECT
+    <include refid="Base_Column_List" />
+    FROM mmall_cart
+    WHERE user_Id = #{userId}
+  </select>
+
+  <select id="selectCartProductCheckedStatusByUserId" parameterType="int" resultType="int" >
+    SELECT count(1) from mmall_cart
+    WHERE user_id = #{userId} and checked = 0
+  </select>
+
+  <delete id="deleteByUserIdProductIds" parameterType="map">
+    DELETE from mmall_cart
+    WHERE
+    user_id = #{userId}
+    <if test="productIdList != null">
+      and product_id in
+      <foreach collection="productIdList" item="item" index="index" open="(" separator="," close=")">
+        #{item}
+      </foreach>
+    </if>
+  </delete>
+  
+  <update id="checkOrUnCheckProduct" parameterType="map">
+    UPDATE mmall_cart
+    SET checked = #{checked},
+    update_time = now()
+    where user_id = #{userId}
+    <if test="productId != null" >
+      and product_id = #{productId}
+    </if>
+  </update>
+
+  <!-- 这里为了杜绝userId不存在 引起的sum(quantity)为 null，赋予一个默认值-->
+  <select id="selectCartProductCount" parameterType="int" resultType="int">
+    SELECT IFNULL(sum(quantity), 0) from mmall_cart as count WHERE user_id = #{userId}
+  </select>
+
+  <select id="selectCheckedCartByUserId" resultMap="BaseResultMap" resultType="int">
+    SELECT
+    <include refid="Base_Column_List" />
+    from mmall_cart
+    WHERE user_id=#{userId}
+    AND checked=1
+  </select>
+
 </mapper>

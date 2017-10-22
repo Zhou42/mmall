@@ -1,12 +1,22 @@
 package com.mmall.service.impl;
 
+import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
+import com.google.common.net.InetAddresses;
 import com.mmall.common.ServerResponse;
 import com.mmall.dao.CategoryMapper;
 import com.mmall.pojo.Category;
 import com.mmall.service.ICategoryService;
+import com.sun.corba.se.spi.activation.Server;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by yangzhou on 2017-06-18.
@@ -17,6 +27,8 @@ public class CategoryServiceImpl implements ICategoryService{
 
     @Autowired
     CategoryMapper categoryMapper;
+
+    private Logger logger = LoggerFactory.getLogger(CategoryServiceImpl.class);
 
     public ServerResponse addCategory(String categoryName, Integer parentId) {
         if (parentId == null || StringUtils.isBlank(categoryName)) {
@@ -48,6 +60,44 @@ public class CategoryServiceImpl implements ICategoryService{
         }
         return ServerResponse.createByErrorMessage("更新品类失败");
     }
+
+    public ServerResponse<List<Category>> getChildrenParallelCategory(Integer categoryId) {
+        List<Category> categoryList = categoryMapper.selectCategoryChildrenByParentId(categoryId);
+        if (CollectionUtils.isEmpty(categoryList)) {
+            logger.info("未找到当前分类的子分类"); // 这里不需要返回前端一个错误
+        }
+        return ServerResponse.createBySuccess(categoryList);
+    }
+
+    public ServerResponse<List<Integer>> selectCategoryAndChildrenById(Integer categoryId) {
+        Set<Category> categorySet = Sets.newHashSet();
+        findChildCategory(categorySet, categoryId);
+
+        List<Integer> categoryIdList = Lists.newArrayList();
+
+        if (categoryId != null) {
+            for (Category categoryItem : categorySet) {
+                categoryIdList.add(categoryItem.getId());
+            }
+        }
+        return ServerResponse.createBySuccess(categoryIdList);
+    }
+
+    public Set<Category> findChildCategory(Set<Category> categorySet, Integer categoryId) {
+        Category category = categoryMapper.selectByPrimaryKey(categoryId);
+
+        if (category != null) {
+            categorySet.add(category);
+        }
+
+        List<Category> categoryList = categoryMapper.selectCategoryChildrenByParentId(categoryId);
+        for (Category categoryItem : categoryList) {
+            findChildCategory(categorySet, categoryItem.getId());
+        }
+        return categorySet;
+    }
+
+
 
 
 }
